@@ -1,4 +1,7 @@
-import 'package:demo_app/components/SearchBar.dart';
+import 'package:demo_app/components/StockList.dart';
+import 'package:demo_app/components/option.dart';
+import 'package:demo_app/components/pagination.dart';
+import 'package:demo_app/components/searchBar.dart';
 import 'package:demo_app/constants/app_data.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_color.dart';
@@ -14,13 +17,19 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   bool isTyping = false;
-  String searchKey = '';
+  String searchTerm = '';
+  String sessionSelected = sessions.first;
+  String floorSelected = floors.first;
+  int currentPage = 1;
 
   handleSearchChange(value) {
-    setState(() {
-      searchKey = value;
-      isTyping = true;
-    });
+    currentPage = 1;
+    if (value.isNotEmpty) {
+      setState(() {
+        searchTerm = value;
+        isTyping = true;
+      });
+    }
   }
 
   handleTypingState() {
@@ -29,125 +38,118 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      initialIndex: 1,
-      length: session.length,
-      child: Scaffold(
-          backgroundColor: AppColor.backgroundColor,
-          appBar: AppBar(
-            toolbarHeight: 120,
-            backgroundColor: AppColor.backgroundColor,
-            title: Column(
-              children: [
-                Container(
-                  alignment: Alignment.centerLeft,
-                  margin: EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    "Đột biến khối lượng giao dịch",
-                    style: AppTypo.small.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                AppSearchBar(
-                  searchController: _searchController,
-                  isTyping: isTyping,
-                  onChangeTypingState: handleTypingState,
-                  onSearch: handleSearchChange,
-                ),
-              ],
-            ),
-            bottom: TabBar(
-              dividerColor: Colors.transparent,
-              indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: AppColor.primaryBlue,
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: AppColor.secondaryTextColor,
-              unselectedLabelStyle: AppTypo.small,
-              labelStyle: AppTypo.small.copyWith(fontWeight: FontWeight.w600),
-              tabs: session
-                  .map((text) => Tab(
-                        text: text,
-                      ))
-                  .toList(),
-            ),
-          ),
-          body: const SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: TabBarView(
-                children: <Widget>[
-                  NestedTabBar('Flights'),
-                  NestedTabBar('Trips'),
-                  NestedTabBar('Explore'),
-                ],
-              ),
-            ),
-          )),
-    );
-  }
-}
-
-class NestedTabBar extends StatefulWidget {
-  const NestedTabBar(this.outerTab, {super.key});
-
-  final String outerTab;
-
-  @override
-  State<NestedTabBar> createState() => _NestedTabBarState();
-}
-
-class _NestedTabBarState extends State<NestedTabBar>
-    with TickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+  handleSelectSession(value) {
+    setState(() {
+      sessionSelected = value;
+      floorSelected = floors.first;
+      currentPage = 1;
+    });
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  handleSelectFloor(value) {
+    setState(() {
+      floorSelected = value;
+      currentPage = 1;
+    });
+  }
+
+  handlePageChange(value) {
+    setState(() {
+      currentPage = value;
+    });
+  }
+
+  List<Map<String, String>> get stockList {
+    List<Map<String, String>> res = stockData;
+    if (floorSelected != "ALL") {
+      res = stockData
+          .where((element) => element["floor"] == floorSelected)
+          .toList();
+    }
+
+    if (searchTerm.isNotEmpty) {
+      res = res
+          .where((element) =>
+              element["code"].toString().toLowerCase().contains(searchTerm))
+          .toList();
+    }
+
+    return res;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        TabBar.secondary(
-          controller: _tabController,
-          dividerColor: Colors.transparent,
-          indicator: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            color: AppColor.secondaryBackgroundColor,
-          ),
-          labelStyle: AppTypo.caption.copyWith(fontWeight: FontWeight.w600),
-          labelColor: Colors.white,
-          unselectedLabelColor: AppColor.secondaryTextColor,
-          unselectedLabelStyle: AppTypo.caption,
-          tabs: floor.map((text) => Tab(text: text)).toList(),
-          padding: EdgeInsets.only(bottom: 24),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: <Widget>[
-              Card(
-                child: Center(child: Text('${widget.outerTab}: Overview tab')),
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                alignment: Alignment.centerLeft,
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  "Đột biến khối lượng giao dịch",
+                  style: AppTypo.small.copyWith(fontWeight: FontWeight.w600),
+                ),
               ),
-              Card(
-                child: Center(
-                    child: Text('${widget.outerTab}: Specifications tab')),
+              AppSearchBar(
+                searchController: _searchController,
+                isTyping: isTyping,
+                onChangeTypingState: handleTypingState,
+                onSearch: handleSearchChange,
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: sessions
+                    .map((session) => Option(
+                        textStyle: AppTypo.small,
+                        primaryTextColor: AppColor.primaryTextColor,
+                        secondaryTextColor: AppColor.secondaryTextColor,
+                        primaryBackgroundColor: AppColor.primaryBlue,
+                        secondaryBackgroundColor:
+                            AppColor.secondaryBackgroundColor,
+                        label: session,
+                        isSelected: sessionSelected == session,
+                        onSelect: handleSelectSession))
+                    .toList(),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: floors
+                    .map((floor) => Option(
+                        textStyle: AppTypo.caption,
+                        primaryTextColor: AppColor.primaryTextColor,
+                        secondaryTextColor: AppColor.secondaryTextColor,
+                        primaryBackgroundColor:
+                            AppColor.secondaryBackgroundColor,
+                        secondaryBackgroundColor: Colors.transparent,
+                        label: floor,
+                        isSelected: floorSelected == floor,
+                        onSelect: handleSelectFloor))
+                    .toList(),
+              ),
+              Expanded(
+                child: StockList(
+                  data: stockList.length > MAX_ITEMS_PER_PAGE
+                      ? stockList
+                          .skip(
+                            (currentPage - 1) * MAX_ITEMS_PER_PAGE,
+                          )
+                          .take(MAX_ITEMS_PER_PAGE)
+                          .toList()
+                      : stockList,
+                  headerColumns: headerColumns,
+                ),
+              ),
+              Pagination(
+                  currentPage: currentPage,
+                  totalPages: (stockList.length / MAX_ITEMS_PER_PAGE).ceil(),
+                  onPageSelected: handlePageChange)
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
