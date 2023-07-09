@@ -22,8 +22,8 @@ class Pagination extends StatelessWidget {
         buildPaginationArrow(true),
         ...List<int>.generate(totalPages, (int index) => index + 1,
                 growable: false)
-            .skip(currentPage - 1)
-            .take(MAX_ITEMS_PER_PAGE)
+            .skip(currentPage > MAX_PAGES_PER_ROW ? MAX_PAGES_PER_ROW : 0)
+            .take(MAX_PAGES_PER_ROW)
             .map((e) => buildPageButton(e))
             .toList(),
         buildPaginationArrow(false)

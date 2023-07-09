@@ -139,4 +139,6 @@ const headerColumns = [
   {"name": "volume", "label": "Khối lượng GD", "type": DataType.number},
 ];
 
-const MAX_ITEMS_PER_PAGE = 3;
+const MAX_ITEMS_PER_PAGE = 10;
+
+const MAX_PAGES_PER_ROW = 5;

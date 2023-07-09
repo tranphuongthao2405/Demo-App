@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   String sessionSelected = sessions.first;
   String floorSelected = floors.first;
   int currentPage = 1;
+  int pageRowSkip = 0;
 
   handleSearchChange(value) {
     currentPage = 1;
